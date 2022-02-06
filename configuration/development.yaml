@@ -1,0 +1,6 @@
+server:
+  port: 3000
+  basepath: /api/v1
+  secret: X8i72DoRKxCFnO62
+
+
