@@ -8,6 +8,13 @@ import (
 	"github.com/mikolajsemeniuk/Go-React-Fullstack/configuration"
 )
 
+// FIXME:
+//	duplicated in `services/account.go`
+type Claims struct {
+	Roles []string `json:"roles"`
+	jwt.StandardClaims
+}
+
 func Authorize() gin.HandlerFunc {
 	return gin.HandlerFunc(func(context *gin.Context) {
 		cookie, err := context.Request.Cookie("cookie")
@@ -17,15 +24,16 @@ func Authorize() gin.HandlerFunc {
 		}
 
 		var token *jwt.Token
-		token, err = jwt.ParseWithClaims(cookie.Value, &jwt.StandardClaims{}, func(token *jwt.Token) (interface{}, error) {
+		token, err = jwt.ParseWithClaims(cookie.Value, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 			return []byte(configuration.Config.GetString("server.secret")), nil
 		})
 
-		if err != nil {
+		if err != nil || !token.Valid {
 			context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errors": "not authenticated"})
 			return
 		}
 
-		context.Set("claims", token.Claims)
+		context.AbortWithStatusJSON(http.StatusOK, token.Claims)
+		// context.Set("claims", token.Claims)
 	})
 }
