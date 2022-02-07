@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	data.Context.AutoMigrate(&domain.Account{}, &domain.Role{})
+	data.Context.AutoMigrate(&domain.Account{}, &domain.Role{}, &domain.AccountRole{})
 	data.Seed()
 	application.Listen()
 }

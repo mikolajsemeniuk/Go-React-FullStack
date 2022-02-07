@@ -5,5 +5,5 @@ type Account struct {
 	Username string `gorm:"unique"`
 	Email    string `gorm:"unique"`
 	Password []byte
-	Roles    []Role `gorm:"many2many:account_roles"`
+	Roles    []AccountRole
 }

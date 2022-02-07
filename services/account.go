@@ -46,6 +46,9 @@ func (*account) Register(input *inputs.Register) (string, error) {
 	}
 
 	account.Password = password
+	// account.Roles = []domain.Role{
+	// 	{id: 3,}
+	// }
 	result = data.Context.Create(&account)
 
 	if result.RowsAffected == 0 {
@@ -54,6 +57,7 @@ func (*account) Register(input *inputs.Register) (string, error) {
 
 	mapClaims := jwt.MapClaims{}
 	mapClaims["Issuer"] = account.Id.String()
+	// mapClaims["Issuer"] = strconv.Itoa(account.Id)
 	mapClaims["ExpiresAt"] = time.Now().Add(time.Hour).Unix()
 	mapClaims["Roles"] = []string{"member"}
 
@@ -77,7 +81,7 @@ type Claims struct {
 func (*account) Login(input *inputs.Login) (string, error) {
 	var account domain.Account
 
-	result := data.Context.Where("email = ?", input.Email).Preload("Roles").Take(&account)
+	result := data.Context.Where("email = ?", input.Email).Preload("Roles.Role").Take(&account)
 	if result.RowsAffected == 0 {
 		return "", errors.New("no user with this email address")
 	}
@@ -93,13 +97,14 @@ func (*account) Login(input *inputs.Login) (string, error) {
 
 	var roles []string
 	for _, role := range account.Roles {
-		roles = append(roles, role.Name)
+		roles = append(roles, role.Role.Name)
 	}
 
 	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		roles,
 		jwt.StandardClaims{
-			Issuer:    account.Id.String(),
+			Issuer: account.Id.String(),
+			// Issuer:    strconv.Itoa(account.Id),
 			ExpiresAt: time.Now().Add(time.Hour).Unix(),
 		},
 	})
