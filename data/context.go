@@ -15,9 +15,15 @@ func init() {
 	if err != nil {
 		panic("failed to connect database")
 	}
+	Context.AutoMigrate(&domain.Account{}, &domain.Role{}, &domain.AccountRole{})
 }
 
 func Seed() {
+	result := Context.Exec("PRAGMA foreign_keys = ON", nil)
+	if result.Error != nil {
+		panic(result.Error)
+	}
+
 	var roles []domain.Role
 	if Context.Find(&roles).RowsAffected == 0 {
 		roles = []domain.Role{

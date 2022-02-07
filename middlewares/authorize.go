@@ -3,6 +3,7 @@ package middlewares
 import (
 	"net/http"
 
+	mapset "github.com/deckarep/golang-set"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/mikolajsemeniuk/Go-React-Fullstack/configuration"
@@ -15,7 +16,15 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-func Authorize() gin.HandlerFunc {
+func set(mySlice []string) mapset.Set {
+	mySet := mapset.NewSet()
+	for _, ele := range mySlice {
+		mySet.Add(ele)
+	}
+	return mySet
+}
+
+func Authorize(roles []string) gin.HandlerFunc {
 	return gin.HandlerFunc(func(context *gin.Context) {
 		cookie, err := context.Request.Cookie("cookie")
 		if err != nil {
@@ -33,7 +42,19 @@ func Authorize() gin.HandlerFunc {
 			return
 		}
 
-		context.AbortWithStatusJSON(http.StatusOK, token.Claims)
-		// context.Set("claims", token.Claims)
+		if len(roles) != 0 {
+			s1 := set(token.Claims.(*Claims).Roles)
+			s2 := set(roles)
+			if !s2.IsSubset(s1) {
+				context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+					"errors":         "not authenticated",
+					"current roles":  token.Claims.(*Claims).Roles,
+					"required roles": roles,
+				})
+				return
+			}
+		}
+
+		context.Set("claims", token.Claims)
 	})
 }

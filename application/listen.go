@@ -2,6 +2,7 @@ package application
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/mikolajsemeniuk/Go-React-Fullstack/configuration"
@@ -21,7 +22,10 @@ func Listen() {
 		{
 			auth.POST("register", middlewares.Body(inputs.Register{}), controllers.Account.Register)
 			auth.POST("login", middlewares.Body(inputs.Login{}), controllers.Account.Login)
-			auth.POST("logout", middlewares.Authorize(), controllers.Account.Logout)
+			auth.POST("logout", middlewares.Authorize([]string{}), controllers.Account.Logout)
+			auth.POST("test", middlewares.Authorize([]string{"admin", "moderator"}), func(c *gin.Context) {
+				c.JSON(http.StatusOK, "authenticated")
+			})
 		}
 	}
 	router.Run(fmt.Sprintf(":%s", configuration.Config.GetString("server.port")))
