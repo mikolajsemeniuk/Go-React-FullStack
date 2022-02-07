@@ -22,8 +22,14 @@ func Listen() {
 		{
 			auth.POST("register", middlewares.Body(inputs.Register{}), controllers.Account.Register)
 			auth.POST("login", middlewares.Body(inputs.Login{}), controllers.Account.Login)
-			auth.POST("logout", middlewares.Authorize([]string{}), controllers.Account.Logout)
+			auth.POST("logout", controllers.Account.Logout)
 			auth.POST("test", middlewares.Authorize([]string{"admin", "moderator"}), func(c *gin.Context) {
+				c.JSON(http.StatusOK, "authenticated")
+			})
+			auth.POST("test2", middlewares.Authorize([]string{"moderator"}), func(c *gin.Context) {
+				c.JSON(http.StatusOK, "authenticated")
+			})
+			auth.POST("test3", middlewares.Authorize([]string{}), func(c *gin.Context) {
 				c.JSON(http.StatusOK, "authenticated")
 			})
 		}
