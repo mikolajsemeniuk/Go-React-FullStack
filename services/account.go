@@ -10,6 +10,7 @@ import (
 	"github.com/mikolajsemeniuk/Go-React-Fullstack/data"
 	"github.com/mikolajsemeniuk/Go-React-Fullstack/domain"
 	"github.com/mikolajsemeniuk/Go-React-Fullstack/inputs"
+	"github.com/mikolajsemeniuk/Go-React-Fullstack/repositories"
 	"github.com/mikolajsemeniuk/Go-React-Fullstack/sets"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -28,29 +29,35 @@ type IAccount interface {
 func (*account) Register(input *inputs.Register) (string, error) {
 	var account domain.Account
 
+	// correct
 	result := data.Context.Where("username = ?", input.Username).First(&account)
 	if result.RowsAffected != 0 {
 		return "", errors.New("username already occupied")
 	}
 
+	// correct
 	result = data.Context.Where("email = ?", input.Email).First(&account)
 	if result.RowsAffected != 0 {
 		return "", errors.New("email already occupied")
 	}
 
+	// correct
 	copier.Copy(&account, &input)
 
+	// correct +/-
 	password, err := bcrypt.GenerateFromPassword([]byte(input.Password), 14)
 	if err != nil {
 		return "", err
 	}
 	account.Password = password
 
+	// correct
 	result = data.Context.Create(&account)
 	if result.RowsAffected == 0 {
 		return "", errors.New("error has occured")
 	}
 
+	// correct +/-
 	mapClaims := jwt.MapClaims{}
 	mapClaims["Issuer"] = account.Id.String()
 	mapClaims["ExpiresAt"] = time.Now().Add(time.Hour).Unix()
@@ -58,6 +65,7 @@ func (*account) Register(input *inputs.Register) (string, error) {
 
 	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, mapClaims)
 
+	// correct
 	token, err := claims.SignedString([]byte(configuration.Config.GetString("server.secret")))
 	if err != nil {
 		return "", err
@@ -67,12 +75,9 @@ func (*account) Register(input *inputs.Register) (string, error) {
 }
 
 func (*account) Login(input *inputs.Login) (string, error) {
-	var account domain.Account
+	// var account domain.Account
 
-	result := data.Context.Where("email = ?", input.Email).Preload("Roles.Role").Take(&account)
-	if result.RowsAffected == 0 {
-		return "", errors.New("no user with this email address")
-	}
+	account := *repositories.Account.SingleByEmail(input.Email)
 
 	err := bcrypt.CompareHashAndPassword(account.Password, []byte(input.Password))
 	if err != nil {
